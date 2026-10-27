@@ -116,6 +116,37 @@
         transform: rotateY(180deg);
       }
 
+      /* 3D Photo Ring */
+      .scene3d {
+        perspective: 1000px;
+        height: 320px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+      .ring3d {
+        position: relative;
+        width: 150px;
+        height: 188px;
+        transform-style: preserve-3d;
+        transition: transform 0.9s ease;
+      }
+      .photo3d {
+        position: absolute;
+        inset: 0;
+        border-radius: 16px;
+        border: 4px solid white;
+        box-shadow: 0 10px 25px rgba(225, 29, 72, 0.35);
+        overflow: hidden;
+        background: #ffe4e6;
+      }
+      .photo3d img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
       /* Custom Shimmer effect */
       .shimmer {
         background: linear-gradient(
@@ -284,7 +315,7 @@
 
         <!-- TAB NAVIGATION -->
         <div
-          class="flex justify-center gap-2 mb-8 border-b border-rose-100 pb-4"
+          class="flex flex-wrap justify-center gap-2 mb-8 border-b border-rose-100 pb-4"
         >
           <button
             onclick="switchTab('letter')"
@@ -309,6 +340,14 @@
           >
             <i data-lucide="ticket" class="w-4 h-4"></i>
             <span>Cupones</span>
+          </button>
+          <button
+            onclick="switchTab('photos')"
+            id="tab-photos"
+            class="tab-btn px-4 py-2 rounded-2xl font-fun text-sm font-bold transition-all bg-rose-50/80 text-rose-600 hover:bg-rose-100 flex items-center gap-2"
+          >
+            <i data-lucide="camera" class="w-4 h-4"></i>
+            <span>Fotos</span>
           </button>
         </div>
 
@@ -609,6 +648,61 @@
           </div>
         </div>
 
+        <!-- TAB CONTENT 4: 3D PHOTOS -->
+        <div id="content-photos" class="tab-content hidden">
+          <p class="text-xs sm:text-sm text-center text-slate-500 mb-2">
+            Nuestros momentos en 3D 📸 (pasa el mouse o toca para pausar)
+          </p>
+
+          <div class="scene3d" id="scene3d">
+            <div class="ring3d" id="ring3d">
+              <!-- Cambia los nombres de las fotos aquí (foto1.jpg ... foto6.jpg) -->
+              <div class="photo3d">
+                <img
+                  src="fotos/comiendo_saludable.jpg"
+                  alt="Comiendo saludable"
+                />
+              </div>
+              <div class="photo3d">
+                <img
+                  src="fotos/salida_al_ventura_mall.jpg"
+                  alt="Salida al Ventura Mall"
+                />
+              </div>
+              <div class="photo3d">
+                <img
+                  src="fotos/salida_por_mochis.jpg"
+                  alt="Salida por Mochis"
+                />
+              </div>
+              <div class="photo3d">
+                <img src="fotos/unos_frapus.jpg" alt="Unos frapus" />
+              </div>
+              <div class="photo3d">
+                <img
+                  src="fotos/que_rico_recuerdo.jpg"
+                  alt="Qué rico recuerdo"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="flex justify-center gap-4 mt-4">
+            <button
+              onclick="rotateRing(-1)"
+              class="px-4 py-2 bg-rose-500 hover:bg-rose-600 text-white rounded-xl font-bold shadow"
+            >
+              ◀
+            </button>
+            <button
+              onclick="rotateRing(1)"
+              class="px-4 py-2 bg-rose-500 hover:bg-rose-600 text-white rounded-xl font-bold shadow"
+            >
+              ▶
+            </button>
+          </div>
+        </div>
+
         <!-- ACTION FOOTER: WHATSAPP BUTTON -->
         <div
           class="mt-8 pt-6 border-t border-rose-100 flex flex-col sm:flex-row gap-3 justify-center items-center"
@@ -886,6 +980,35 @@
         activeBtn.classList.add("bg-rose-500", "text-white", "shadow-md");
       }
 
+      // --- 3D Photo Ring ---
+      const ring3d = document.getElementById("ring3d");
+      const photos3d = document.querySelectorAll(".photo3d");
+      const step3d = 360 / photos3d.length;
+      let angle3d = 0;
+      let ringPaused = false;
+
+      (function setupRing() {
+        const radius =
+          Math.round(75 / Math.tan(Math.PI / photos3d.length)) + 30;
+        photos3d.forEach((p, i) => {
+          p.style.transform = `rotateY(${i * step3d}deg) translateZ(${radius}px)`;
+        });
+      })();
+
+      function rotateRing(dir) {
+        angle3d -= dir * step3d;
+        ring3d.style.transform = `rotateY(${angle3d}deg)`;
+      }
+
+      setInterval(() => {
+        if (!ringPaused) rotateRing(1);
+      }, 3000);
+
+      const scene3d = document.getElementById("scene3d");
+      scene3d.addEventListener("mouseenter", () => (ringPaused = true));
+      scene3d.addEventListener("mouseleave", () => (ringPaused = false));
+      scene3d.addEventListener("touchstart", () => (ringPaused = !ringPaused));
+
       // --- Flip Card Helper ---
       function flipCard(card) {
         const inner = card.querySelector(".card-inner");
@@ -904,8 +1027,6 @@
       );
 
       // --- Claim Coupon Function ---
-      // Mostrar la animación de confeti
-
       async function claimCoupon(title) {
         try {
           if (!supabaseClient) {
